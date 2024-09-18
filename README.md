@@ -47,3 +47,85 @@ en nuestro caso la línea `44` y `56` cuya regla que se está violando es
 
 Por el momento lo dejaremos tal cual, ya sabemos para qué sirve el `SonarLint` y ahora continuaremos con el tutorial
 donde veremos el uso de `SonarQube` que es el objetivo de este tutorial.
+
+## Agrega plugins de JaCoCo y SonarQube
+
+En nuestro `pom.xml` agregamos los siguientes plugins correspondientes a `SonarQube`, para la revisión de la calidad de
+código y a `JaCoCo`, para la cobertura de código. Para mayor información sobre el uso de `JaCoCo` visitar mi
+repositorio de [spring-boot-test-jacoco](https://github.com/magadiflo/spring-boot-test-jacoco).
+
+````xml
+
+<plugins>
+    <!--SonarQube-->
+    <plugin>
+        <groupId>org.sonarsource.scanner.maven</groupId>
+        <artifactId>sonar-maven-plugin</artifactId>
+        <version>4.0.0.4121</version>
+    </plugin>
+    <!--/SonarQube-->
+    <!--JaCoCo-->
+    <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.12</version>
+        <executions>
+            <execution>
+                <goals>
+                    <goal>prepare-agent</goal>
+                </goals>
+            </execution>
+            <execution>
+                <id>report</id>
+                <phase>test</phase>
+                <goals>
+                    <goal>report</goal>
+                </goals>
+                <configuration>
+                    <excludes>
+                        <exclude>**/entity/Account.class</exclude>
+                        <exclude>**/entity/Bank.class</exclude>
+                        <exclude>**/SpringBootTestApplication.class</exclude>
+                    </excludes>
+                </configuration>
+            </execution>
+            <execution>
+                <id>check</id>
+                <goals>
+                    <goal>check</goal>
+                </goals>
+                <configuration>
+                    <rules>
+                        <rule>
+                            <element>PACKAGE</element>
+                            <limits>
+                                <limit>
+                                    <counter>LINE</counter>
+                                    <value>COVEREDRATIO</value>
+                                    <minimum>0.85</minimum>
+                                </limit>
+                            </limits>
+                        </rule>
+                    </rules>
+                </configuration>
+            </execution>
+        </executions>
+    </plugin>
+    <!--/JaCoCo-->
+</plugins>
+````
+
+Notar que en el plugin de `JaCoCo` estoy excluyendo tres clases: dos entidades y la clase principal de la aplicación.
+Las entidades por sí mismas no contienen lógica, solo contiene atributos con los que se mapean a las columnas de
+las tablas en la base de datos.
+
+Con respecto a la clase principal `SpringBootTestApplication`, también lo excluímos, dado que no tenemos lógica dentro,
+pero si la tuviéramos, sí sería necesario crearle sus test unitario y no excluirlo de la cobertura.
+
+**NOTA**
+
+> En nuestro caso, la entidad `Account` sí contiene cierta lógica en el método `debit()`, incluso está lanzando
+> una excepción. Definir este método con esa lógica dentro de la entidad, estaría mal desde mi punto de vista.
+> La lógica debería haberlo colocado en otra clase, pero bueno, así desde un inicio lo diseño el tutor `Andrés Guzmán`
+> que fue de donde se tomó el curso original de este proyecto base (`spring-boot-test`). Entonces, en mi caso, también
+> lo voy a excluir para tratarlo como una entidad que no debe añadirse para la evaluación de la cobertura de código.
