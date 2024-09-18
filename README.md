@@ -48,7 +48,45 @@ en nuestro caso la línea `44` y `56` cuya regla que se está violando es
 Por el momento lo dejaremos tal cual, ya sabemos para qué sirve el `SonarLint` y ahora continuaremos con el tutorial
 donde veremos el uso de `SonarQube` que es el objetivo de este tutorial.
 
-## Agrega plugins de JaCoCo y SonarQube
+## Configura propiedades de SonarQube en el proyecto
+
+Vamos a agregar las siguientes propiedades de `SonarQube` al archivo `pom.xml`.
+
+````xml
+
+<properties>
+    <java.version>21</java.version>
+
+    <!--Sonar Properties-->
+    <sonar.projectKey>spring-boot-sonarqube</sonar.projectKey>
+    <sonar.projectName>spring-boot-sonarqube</sonar.projectName>
+    <sonar.host.url>http://localhost:9000</sonar.host.url>
+    <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+    <sonar.coverage.exclusions>src/**/entity/*, src/**/SpringBootTestApplication.java</sonar.coverage.exclusions>
+    <!--/Sonar Properties-->
+</properties>
+````
+
+**DONDE**
+
+- `<sonar.projectKey>` y `<sonar.projectName>`, son usados por el plugin de `SonarQube` (lo agregaremos en el siguiente
+  apartado), para identificar el proyecto dentro de `SonarQube`. `projectKey` es el identificador único del proyecto y
+  `projectName` es el nombre del proyecto que se mostrará en la interfaz de usuario de `SonarQube`.
+
+
+- `<sonar.host.url>`, es la URL del servidor de `SonarQube` al que el plugin enviará el análisis. En nuestro caso,
+  apunta a un servidor `SonarQube` local en `http://localhost:9000`.
+
+
+- `<sonar.coverage.jacoco.xmlReportPaths>`, define la ruta del reporte de cobertura de `JaCoCo` que será consumido por
+  `SonarQube`. El plugin espera este reporte en la ruta especificada después de ejecutar los tests.
+
+
+- `<sonar.coverage.exclusions>`, define los archivos o paquetes que deseas excluir del análisis de cobertura de código.
+  En nuestro caso, estamos excluyendo las clases bajo `src/**/entity/*` y el archivo `SpringAppApplication.java`. Estas
+  serán las mismas exclusiones que colocaremos en la etiqueta `<exclude>` del plugin de `JaCoCo`.
+
+## Agrega plugins de SonarQube y JaCoCo
 
 En nuestro `pom.xml` agregamos los siguientes plugins correspondientes a `SonarQube`, para la revisión de la calidad de
 código y a `JaCoCo`, para la cobertura de código. Para mayor información sobre el uso de `JaCoCo` visitar mi
