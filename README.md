@@ -27,5 +27,23 @@ Lo primero que haremos será instalar el plugin de `SonarLint` en nuestro `Intel
 escaneando nuestro código y nos diga qué tan buenas prácticas de codificación estamos siguiendo, qué es lo que debemos
 corregir, etc.
 
-![img.png](assets/img.png)
+![img.png](assets/01.png)
 
+## Funcionamiento de SonarLint
+
+Luego de haber instalado el `Plugin` de `SonarLint`, veamos rápidamente su funcionamiento dentro de nuestro proyecto.
+
+Si abrimos alguna clase de nuestro proyecto, `SonarLint` entrará en acción, por ejemplo, si abrimos el controlador
+`AccountController`, inmediatamente `SonarLint` realizará la verificación de nuestro código mostrándonos en la parte
+superior derecha el símbolo de un `círculo con raya en medio de color rojo` y un número. Mientras el número sea el
+menor posible, es mejor, dado que nos indica qué tantas malas prácticas han detectado.
+
+![02.png](assets/02.png)
+
+Si damos click en la imagen del círculo rojo, nos aparecerá la consola inferior donde nos indicará dónde se han cometido
+las malas prácticas o algún problema de codificación. En nuestro caso, ha detectado dos problemas de intencionalidad,
+en nuestro caso la línea `44` y `56` cuya regla que se está violando es
+`Los tipos comodín genéricos no deben usarse en tipos de retorno`.
+
+Por el momento lo dejaremos tal cual, ya sabemos para qué sirve el `SonarLint` y ahora continuaremos con el tutorial
+donde veremos el uso de `SonarQube` que es el objetivo de este tutorial.
