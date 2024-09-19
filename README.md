@@ -402,3 +402,14 @@ Si ingresamos al nombre que le definimos al proyecto `spring-boot-sonarqube` ver
 pasado exitosamente.
 
 ![13.png](assets/13.png)
+
+Ahora, fijémonos en la parte inferior de la imagen anterior, tenemos `2 Code Smells` (el código huele mal).
+Si ingresamos, haciendo clic en el número, nos llevará a la siguiente pantalla donde observaremos los `2 code smells`.
+
+![14.png](assets/14.png)
+
+Ambos tiene el mensaje `Remove usage of generic wildcard type` y si recordamos el plugin `SonarLint` que instalamos en
+`IntelliJ IDEA` ya nos lo había reportado.
+
+![15.png](assets/15.png)
+
