@@ -413,3 +413,79 @@ Ambos tiene el mensaje `Remove usage of generic wildcard type` y si recordamos e
 
 ![15.png](assets/15.png)
 
+## Crea nuestras propias reglas
+
+Nos vamos al menú `Quality Gates` y damos en el botón `Create` para crear una nueva puerta de calidad.
+En el contexto de desarrollo de software, son puntos de control en el proceso de desarrollo donde se evalúa si el código
+cumple con ciertos criterios de calidad antes de avanzar a la siguiente fase del ciclo de vida.
+
+![16.png](assets/16.png)
+
+Luego, seleccionamos el nombre que le dimos al `quality gate` y desbloqueamos la edición.
+
+![17.png](assets/17.png)
+
+En la parte superior derecha damos clic en el botón `Add Conditions`.
+
+![18.png](assets/18.png)
+
+Agregamos nuestra propia condición donde la cobertura de las pruebas serán del `85%` y será aplicado a todo el código.
+
+![19.png](assets/19.png)
+
+Ahora, podemos observar que nuestra regla se ha agregado correctamente. La cobertura que hemos agregado validará que si
+se ha cubierto menor al 85%, entonces `SonarQube` debe lanzar un error, no debe dejar pasar.
+
+![20.png](assets/20.png)
+
+Para que esto funcione en nuestro proyecto `spring-boot-sonarqube` necesitamos habilitarlo. Para eso, debemos ir al
+apartado de `Projects` y habilitar el proyecto al que se le aplicará la regla anteriormente definida.
+
+![21.png](assets/21.png)
+
+## Comprobando el funcionamiento de nuestra regla
+
+Para comprobar que `SonarQube` está validando que nuestra regla debe superar el `85%` de cobertura, vamos a deshabilitar
+los test unitarios que tenemos en nuestra aplicación utilizando la anotación de `JUnit` `@Disabled`.
+
+````java
+
+@Disabled
+class AccountServiceImplUnitTest { /* test codes */
+}
+
+@Disabled
+@ExtendWith(MockitoExtension.class)
+class AccountServiceImplWithMockitoAnnotationsUnitTest { /* test codes */
+}
+
+@Disabled
+@SpringBootTest(classes = AccountServiceImpl.class)
+class AccountServiceImplSpringBootAnnotationsTest { /* test codes */
+}
+````
+
+También vamos a deshabilitar en el `pom.xml` la siguiente etiqueta del plugin de `JaCoCo`. De esta manera, podremos
+verificar y subir el reporte a `SonarQube` sin problemas.
+
+````xml
+
+<limit>
+    <!--<minimum>0.85</minimum>-->
+</limit>
+````
+
+Ahora, ejecutamos el siguiente comando para que verifique y suba el reporte a `SonarQube`.
+
+````bash
+$ mvn clean verify sonar:sonar -D sonar.login=sqa_371ea38275c92af239ae3575e9ff6cb83fe354b6
+````
+
+Como resultado, la ejecución del comando anterior ha sido exitosa subiéndose los reportes a sonar sin problemas.
+
+![22.png](assets/22.png)
+
+Ahora, si revisamos `SonarQube` vemos que no ha pasado la cobertura que definimos anteriormente en el menú de
+`Quality Gates`, eso significa que nuestra regla fue configurada correctamente.
+
+![23.png](assets/23.png)
