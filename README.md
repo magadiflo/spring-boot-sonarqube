@@ -167,3 +167,162 @@ pero si la tuviéramos, sí sería necesario crearle sus test unitario y no excl
 > La lógica debería haberlo colocado en otra clase, pero bueno, así desde un inicio lo diseño el tutor `Andrés Guzmán`
 > que fue de donde se tomó el curso original de este proyecto base (`spring-boot-test`). Entonces, en mi caso, también
 > lo voy a excluir para tratarlo como una entidad que no debe añadirse para la evaluación de la cobertura de código.
+
+## [Iniciar el contenedor de SonarQube mediante Docker Compose](https://docs.sonarsource.com/sonarqube/latest/setup-and-upgrade/install-the-server/installing-sonarqube-from-docker/)
+
+Vamos a crear el archivo `compose.yml` donde definiremos los siguientes servicios. El primero será para la creación
+del contenedor de `SonarQube` y el segundo será para crear una base de datos de `PostgreSQL` que usará el contenedor
+de `SonarQube`.
+
+Esta configuración de `docker compose` lo obtuve de la página oficial de `SonarQube`, del apartado
+[Starting the container by using Docker compose](https://docs.sonarsource.com/sonarqube/latest/setup-and-upgrade/install-the-server/installing-sonarqube-from-docker/),
+aunque luego agregué algunas otras configuraciones adicionales como el nombre de los contenedores, nombre de los
+volúmenes, de la red y se definió una base de datos llamada `db_sonarqube`.
+
+````yml
+services:
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: c-sonarqube
+    depends_on:
+      - db-sonarqube
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://db-sonarqube:5432/db_sonarqube
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    ports:
+      - '9000:9000'
+    networks:
+      - sonarqube-net
+
+  db-sonarqube:
+    image: postgres:15.2-alpine
+    container_name: c-db-sonarqube
+    environment:
+      POSTGRES_DB: db_sonarqube
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+    volumes:
+      - postgresql:/var/lib/postgresql
+      - postgresql_data:/var/lib/postgresql/data
+    networks:
+      - sonarqube-net
+
+volumes:
+  sonarqube_data:
+    name: sonarqube_data
+  sonarqube_extensions:
+    name: sonarqube_extensions
+  sonarqube_logs:
+    name: sonarqube_logs
+  postgresql:
+    name: postgresql
+  postgresql_data:
+    name: postgresql_data
+
+networks:
+  sonarqube-net:
+    name: sonarqube-net
+````
+
+La creación de los siguientes volúmenes para el contenedor de `SonarQube` ayuda a evitar la pérdida de información al
+actualizar a una nueva versión o a una edición superior:
+
+- `sonarqube_data`: contiene archivos de datos, como índices de Elasticsearch
+- `sonarqube_logs`: contiene registros de SonarQube sobre el acceso, el proceso web, el proceso CE y Elasticsearch
+- `sonarqube_extensions`: contendrá todos los plugins que instale y el controlador JDBC de Oracle, si es necesario.
+
+**NOTA**
+> Ya se proporcionan los controladores para las bases de datos compatibles `(excepto Oracle)`. Si utiliza una base de
+> datos `Oracle`, debe agregar el controlador `JDBC` al volumen `sonar_extensions`.
+
+Con respecto al contenedor de postgres, hemos definido dos volúmenes. Aquí se muestra una explicación de cada uno.
+
+1. `postgresql:/var/lib/postgresql`: Este volumen se utiliza para almacenar los archivos de configuración y otros datos
+   necesarios para la operación de `PostgreSQL`. Es útil para mantener la configuración persistente entre reinicios del
+   contenedor.
+2. `postgresql_data:/var/lib/postgresql/data`: Este volumen es específico para los datos de la base de datos. Al separar
+   los datos de la base de datos de los archivos de configuración, puedes gestionar mejor las copias de seguridad y la
+   recuperación de datos.
+
+Ahora que tenemos los dos servicios bien configurados, procedemos a levantar los contenedores ejecutando el siguiente
+comando.
+
+````bash
+$ docker compose up -d
+
+[+] Running 8/8                          
+ ✔ Network sonarqube-net          Created
+ ✔ Volume "sonarqube_extensions"  Created
+ ✔ Volume "sonarqube_logs"        Created
+ ✔ Volume "postgresql"            Created
+ ✔ Volume "postgresql_data"       Created
+ ✔ Volume "sonarqube_data"        Created
+ ✔ Container c-db-sonarqube       Started
+ ✔ Container c-sonarqube          Started
+````
+
+Listamos y verificamos que los dos contenedores se han levantado exitosamente. Es importante notar que el contenedor de
+la base de datos de postgres para sonarqube solo tiene definido su puerto interno, no el externo. Por lo que, el
+contenedor de `c-sonarqube` se comunica con el contenedor `c-db-sonarqube` a través del nombre del servicio
+`db-sonarqube`.
+
+````bash
+$ ocker container ls -a
+CONTAINER ID   IMAGE                     COMMAND                  CREATED          STATUS                     PORTS                    NAMES
+7b809603ab28   sonarqube:lts-community   "/opt/sonarqube/dock…"   10 seconds ago   Up 9 seconds               0.0.0.0:9000->9000/tcp   c-sonarqube
+657a4a6059e1   postgres:15.2-alpine      "docker-entrypoint.s…"   10 seconds ago   Up 9 seconds               5432/tcp                 c-db-sonarqube
+````
+
+Si ingresamos dentro del contenedor de la base de datos de postgres, veremos que se ha creado correctamente la base
+de datos y también las tablas.
+
+````bash
+$ docker container exec -it c-db-sonarqube /bin/sh
+/ # psql -U sonar -d db_sonarqube
+psql (15.2)
+Type "help" for help.
+
+db_sonarqube=# \l
+                                              List of databases
+     Name     | Owner | Encoding |  Collate   |   Ctype    | ICU Locale | Locale Provider | Access privileges
+--------------+-------+----------+------------+------------+------------+-----------------+-------------------
+ db_sonarqube | sonar | UTF8     | en_US.utf8 | en_US.utf8 |            | libc            |
+ postgres     | sonar | UTF8     | en_US.utf8 | en_US.utf8 |            | libc            |
+ template0    | sonar | UTF8     | en_US.utf8 | en_US.utf8 |            | libc            | =c/sonar         +
+              |       |          |            |            |            |                 | sonar=CTc/sonar
+ template1    | sonar | UTF8     | en_US.utf8 | en_US.utf8 |            | libc            | =c/sonar         +
+              |       |          |            |            |            |                 | sonar=CTc/sonar
+(4 rows)
+
+db_sonarqube=# \dt
+                 List of relations
+ Schema |           Name            | Type  | Owner
+--------+---------------------------+-------+-------
+ public | active_rule_parameters    | table | sonar
+ public | active_rules              | table | sonar
+ ...
+````
+
+Luego de haber verificado que los contenedores están corriendo, vamos a abrir el navegador y colocar la siguiente `url`
+para acceder a `SonarQube`: `http://localhost:9000`. Recordar que el puerto `9000` fue el que definimos a `SonarQube`
+en el archivo `compose.yml`.
+
+Al acceder a `SonarQube` por primera vez, nos pedirá que iniciemos sesión. El usuario será `admin` y la contraseña será
+`admin`. Estas credenciales son las que vienen por defecto en `SonarQube`.
+
+![03.png](assets/03.png)
+
+En la siguiente pantalla creamos una nueva contraseña a partir de la contraseña anterior (`admin`). La nueva contraseña
+que le establecí fue `sonar`.
+
+![04.png](assets/04.png)
+
+Al dar en el botón `Update` seremos redireccionados a la pantalla principal de `SonarQube`. Es en esta pantalla donde
+empezaremos a trabajar con `SonarQube`.
+
+![05.png](assets/05.png)
