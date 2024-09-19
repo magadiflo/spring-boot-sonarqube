@@ -107,6 +107,13 @@ repositorio de [spring-boot-test-jacoco](https://github.com/magadiflo/spring-boo
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>0.8.12</version>
+        <configuration>
+            <excludes>
+                <exclude>**/entity/Account.class</exclude>
+                <exclude>**/entity/Bank.class</exclude>
+                <exclude>**/SpringBootTestApplication.class</exclude>
+            </excludes>
+        </configuration>
         <executions>
             <execution>
                 <goals>
@@ -119,13 +126,6 @@ repositorio de [spring-boot-test-jacoco](https://github.com/magadiflo/spring-boo
                 <goals>
                     <goal>report</goal>
                 </goals>
-                <configuration>
-                    <excludes>
-                        <exclude>**/entity/Account.class</exclude>
-                        <exclude>**/entity/Bank.class</exclude>
-                        <exclude>**/SpringBootTestApplication.class</exclude>
-                    </excludes>
-                </configuration>
             </execution>
             <execution>
                 <id>check</id>
@@ -326,3 +326,79 @@ Al dar en el botón `Update` seremos redireccionados a la pantalla principal de 
 empezaremos a trabajar con `SonarQube`.
 
 ![05.png](assets/05.png)
+
+## Generando Token de Seguridad para acceder desde Spring Boot a SonarQube
+
+Nos vamos al apartado de `My Account`.
+
+![06.png](assets/06.png)
+
+En la pestaña `Security` configuramos ciertos parámetros para generar un token.
+
+![07.png](assets/07.png)
+
+Debemos copiar y guardar bien el token, ya que luego no se mostrará.
+
+![08.png](assets/08.png)
+
+## Genera el jar ejecutando los test de Spring Boot
+
+Con el siguiente comando nosotros construimos el `jar` de nuestro proyecto y al mismo tiempo se ejecutan los test que
+tenemos en la aplicación.
+
+````bash
+$ mvn clean package
+````
+
+Al finalizar, vemos que todos los test pasan exitosamente y que nuestro `jar` se ha construido sin problemas.
+
+![09.png](assets/09.png)
+
+Con el siguiente comando, verificamos si nuestros paquetes están cumpliendo con la cobertura mínima establecida
+en `jacoco` dentro del `pom.xml`. Entonces, para verificar la cobertura ejecutamos el siguiente comando:
+
+````bash
+$ mvn clean verify
+````
+
+Finalizada la ejecución, vemos que hemos pasado exitosamente la cobertura mínima establecida.
+
+![10.png](assets/10.png)
+
+## Ejecuta reporte de SonarQube
+
+Para generar el reporte de `SonarQube` ejecutamos el siguiente comando. Notar que aquí estamos haciendo uso del
+token que generamos en un apartado superior.
+
+`verify`, esta fase de `Maven` se encarga de ejecutar cualquier verificación necesaria en el proyecto
+para asegurar que está listo para ser empaquetado. Esto incluye la ejecución de `tests unitarios` y de `integración`.
+Si tienes configurado `Jacoco`, también generará el `reporte de cobertura de código` en esta fase.
+
+`sonar:sonar`, este es el objetivo del plugin de `SonarQube` para analizar el código fuente. `SonarQube` realiza un
+análisis estático del código para encontrar bugs, vulnerabilidades y otros problemas de calidad del código.
+
+`-D sonar.login`, esta es una opción que pasa un parámetro al plugin de `SonarQube`. En este caso, `sonar.login` es la
+clave de acceso o token que se utiliza para autenticar la conexión con el servidor de `SonarQube`. Es decir, este
+token permite que el análisis pueda subirse al servidor y ser registrado.
+
+````bash
+$ mvn clean verify sonar:sonar -D sonar.login=sqa_371ea38275c92af239ae3575e9ff6cb83fe354b6
+````
+
+**NOTA**
+
+> En el tutorial original de `Un Programador Nace` no usa `sonar.login` sino más bien, `sonar.token`, esto posiblemente
+> se deba a la versión de `SonarQube` que está usando.
+
+Al finalizar la ejecución del comando anterior, vemos que tanto la verificación como la
+
+![11.png](assets/11.png)
+
+Ahora, si nos dirigimos al servidor de `SonarQube` veremos que los resultados ya se han subido.
+
+![12.png](assets/12.png)
+
+Si ingresamos al nombre que le definimos al proyecto `spring-boot-sonarqube` veremos que está todo en verde. Todo ha
+pasado exitosamente.
+
+![13.png](assets/13.png)

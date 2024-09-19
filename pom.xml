@@ -89,6 +89,13 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.12</version>
+                <configuration>
+                    <excludes>
+                        <exclude>**/entity/Account.class</exclude>
+                        <exclude>**/entity/Bank.class</exclude>
+                        <exclude>**/SpringBootTestApplication.class</exclude>
+                    </excludes>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
@@ -101,13 +108,6 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
-                        <configuration>
-                            <excludes>
-                                <exclude>**/entity/Account.class</exclude>
-                                <exclude>**/entity/Bank.class</exclude>
-                                <exclude>**/SpringBootTestApplication.class</exclude>
-                            </excludes>
-                        </configuration>
                     </execution>
                     <execution>
                         <id>check</id>
